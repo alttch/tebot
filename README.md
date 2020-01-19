@@ -6,6 +6,12 @@ The goal is to to keep it simple.
 <img src="https://img.shields.io/badge/license-MIT-green.svg" />
 <img src="https://img.shields.io/badge/python-3.6%20%7C%203.7%20%7C%203.8-blue.svg" />
 
+## How to install
+
+```shell
+pip3 install tebot
+```
+
 ## How to use
 
 ### Start bot
