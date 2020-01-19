@@ -30,6 +30,7 @@ mybot.set_token('botsecrettoken')
 import json
 with open('bot-state.json') as fh:
     mybot.load(json.loads(fh.read()))
+# start bot
 mybot.start()
 ```
 
