@@ -78,6 +78,14 @@ Override class methods:
 
 * **on_message** override to implement advanced handling
 
+# Bot options
+
+```python
+mybot.timeout = 5 # set Telegram API timeout (default: 10 sec)
+mybot.retry_interval = 1 # if API command fails, re-send it in 1 second
+                         # (default: None, don't re-send)
+```
+
 ### Everything else
 
 Refer to function pydoc for more info.
