@@ -76,3 +76,7 @@ Override class methods:
 * **handle_command(self, chat_id, cmd)** handle commands (starting with '/')
 
 * **on_message** override to implement advanced handling
+
+### Everything else
+
+Refer to function pydoc for more info.
