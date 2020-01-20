@@ -21,7 +21,6 @@ pip3 install tebot
 If your project uses [neotasker](https://github.com/alttch/neotasker)
 
 ```python
-
 from tebot import TeBot
 
 # interval - polling interval, must be specified
@@ -40,6 +39,7 @@ If it doesn't:
 
 ```python
 from neotasker import task_supervisor
+from tebot import TeBot
 
 task_supervisor.create_aloop('default', default=True)
 task_supervisor.start()
