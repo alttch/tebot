@@ -63,7 +63,9 @@ class TeBot(neotasker.BackgroundIntervalWorker):
             # it's recommended to send video with send_video method
             # as filetype.guess sometimes can not detect all formats
             self.send_video(chat_id, caption='test video', media=media)
-            # self.send(chat_id, reply_markup=_demo_reply_markup)
+            self.send(chat_id,
+                      msg='choose option',
+                      reply_markup=_demo_reply_markup)
         else:
             self.send(chat_id,
                       msg=f'Command unknown: {cmd}',
