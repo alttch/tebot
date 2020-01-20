@@ -75,12 +75,13 @@ with open('image.jpg', 'rb') as fh:
 
 Override class methods:
 
-* **handle_message(self, chat_id, text)** handle regular messages
+* **handle_message(self, chat_id, text, payload)** handle regular messages
 
-* **handle_command(self, chat_id, cmd)** handle commands (starting with '/')
+* **handle_command(self, chat_id, cmd, payload)** handle commands (starting
+  with '/')
 
-* **handle_query(self, chat_id, query_id, data)** handle callback queries. By
-  default, considers all query data are commands
+* **handle_query(self, chat_id, query_id, data, payload)** handle callback
+  queries. By default, considers all query data are commands
 
 * **on_message** override to implement advanced message handling
 * **on_query** override to implement advanced callback query handling

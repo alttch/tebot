@@ -19,7 +19,7 @@ _demo_reply_markup = {
 
 class TeBot(neotasker.BackgroundIntervalWorker):
 
-    def handle_message(self, chat_id, text, **kwargs):
+    def handle_message(self, chat_id, text, payload, **kwargs):
         """
         Override to handle text messages
 
@@ -29,7 +29,7 @@ class TeBot(neotasker.BackgroundIntervalWorker):
                   msg=f'Got text: {text}',
                   reply_markup=_demo_reply_markup)
 
-    def handle_command(self, chat_id, cmd, **kwargs):
+    def handle_command(self, chat_id, cmd, payload, **kwargs):
         """
         Override to handle commands
 
@@ -71,7 +71,7 @@ class TeBot(neotasker.BackgroundIntervalWorker):
                       msg=f'Command unknown: {cmd}',
                       reply_markup=_demo_reply_markup)
 
-    def handle_query(self, chat_id, query_id, data, **kwargs):
+    def handle_query(self, chat_id, query_id, data, payload, **kwargs):
         """
         Override to handle queries
 
@@ -92,10 +92,10 @@ class TeBot(neotasker.BackgroundIntervalWorker):
             return
         text = msg.get('text')
         if not text: return
-        return self.handle_command(chat_id, text[1:],
-                                   message_id=message_id) if text.startswith(
-                                       '/') else self.handle_message(
-                                           chat_id, text, message_id=message_id)
+        return self.handle_command(
+            chat_id, text[1:], message_id=message_id,
+            payload=msg) if text.startswith('/') else self.handle_message(
+                chat_id, text, message_id=message_id, payload=msg)
 
     def on_query(self, query):
         """
@@ -113,7 +113,8 @@ class TeBot(neotasker.BackgroundIntervalWorker):
         return self.handle_query(chat_id,
                                  query_id,
                                  query.get('data'),
-                                 message_id=message_id)
+                                 message_id=message_id,
+                                 payload=query)
 
     def set_token(self, token=None):
         """
