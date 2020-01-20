@@ -12,6 +12,9 @@ g = threading.local()
 class TeBot(neotasker.BackgroundIntervalWorker):
 
     def route(self, *args, **kwargs):
+        """
+        route decorator
+        """
 
         def inner(fn):
             methods = kwargs.get('methods', [])
@@ -21,6 +24,17 @@ class TeBot(neotasker.BackgroundIntervalWorker):
         return inner
 
     def register_route(self, fn, path=None, methods='command'):
+        """
+        Register route
+
+        Args:
+            fn: route function
+            path: list of commands, string or list
+            methods: "message" (message handler, can be only one), "command"
+                (default), "query" / "callback_query", "*" for all, string or
+                list
+
+        """
         if not methods:
             methods = 'command'
         if not isinstance(methods, tuple) and not isinstance(methods, list):

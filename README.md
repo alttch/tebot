@@ -154,8 +154,7 @@ Override class methods:
 * **handle_command** handle commands (starting
   with '/')
 
-* **handle_query** handle callback
-  queries. By default, considers all query data are commands
+* **handle_query** handle callback queries
 
 * **on_message** override to implement advanced message handling
 
