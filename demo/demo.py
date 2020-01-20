@@ -17,13 +17,13 @@ logging.getLogger('urllib3').setLevel(logging.WARNING)
 
 reply_markup = {
     'inline_keyboard': [[{
-        'text': 'Picture',
+        'text': '🐈 Picture',
         'callback_data': '/pic'
     }], [{
-        'text': 'Video',
+        'text': '📹 Video',
         'callback_data': '/vid'
     }], [{
-        'text': 'Alert',
+        'text': '⚠️  Alert',
         'callback_data': '/alert'
     }]]
 }
