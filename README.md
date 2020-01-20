@@ -149,12 +149,12 @@ The following kwargs are sent to registered methods:
 
 Override class methods:
 
-* **handle_message(self, chat_id, text, payload)** handle regular messages
+* **handle_message** handle regular messages
 
-* **handle_command(self, chat_id, cmd, payload)** handle commands (starting
+* **handle_command** handle commands (starting
   with '/')
 
-* **handle_query(self, chat_id, query_id, data, payload)** handle callback
+* **handle_query** handle callback
   queries. By default, considers all query data are commands
 
 * **on_message** override to implement advanced message handling
