@@ -132,7 +132,8 @@ class TeBot(neotasker.BackgroundIntervalWorker):
         Called automatically by default on_message
         """
         with self.lock:
-            if chat_id in self._chat_id_processed_message and self._chat_id_processed_message[
+            if chat_id in self._chat_id_processed_message and \
+                    self._chat_id_processed_message[
                     chat_id] >= message_id:
                 return True
             else:
@@ -146,7 +147,8 @@ class TeBot(neotasker.BackgroundIntervalWorker):
         Called automatically by default on_query
         """
         with self.lock:
-            if chat_id in self._chat_id_processed_query and self._chat_id_processed_query[
+            if chat_id in self._chat_id_processed_query and \
+                    self._chat_id_processed_query[
                     chat_id] == query_id:
                 return True
             else:
