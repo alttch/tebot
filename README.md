@@ -117,9 +117,9 @@ def default_cmd_handler(chat_id, path, **kwargs):
   both commands and callback queries
 
 
-#### Method kwargs
+#### Handler kwargs
 
-The following kwargs are sent to registered methods:
+The following kwargs are sent to registered handlers:
 
 * **text** message text (only for message handler)
 
@@ -130,18 +130,18 @@ The following kwargs are sent to registered methods:
 
 * **chat_id** current chat id
 
-* **query_id** callback query id, if method executed as a callback query
+* **query_id** callback query id, if handler is executed as a callback query
   handler
 
 * **payload** full request payload
 
 * **method** "command" or "query" for callback query
 
-#### Method return data
+#### Handler return data
 
-* If command is handled, the method may return nothing
+* If command is handled, the handler may return nothing
 
-* If callback query is handled, the method may return dict, which is used as a
+* If callback query is handled, the handler may return dict, which is used as a
   payload for the callback query answer (e.g. include "url", "show_alert" etc,
   see Telegram Bot API for more details)
 
