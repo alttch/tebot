@@ -90,12 +90,12 @@ def my_message(chat_id, text, **kwargs):
 # command handler for /start and /help
 @mybot.route(path=['/start', '/help'])
 def start(chat_id, **kwargs):
-    mybot.send(chat_id, 'got HELP command')
+    mybot.send(chat_id, msg='got HELP command')
 
 # command and callback query handler
 @mybot.route(methods='*')
 def default_cmd_handler(chat_id, path, **kwargs):
-    mybot.send(chat_id, f'command not implemented: {path}')
+    mybot.send(chat_id, msg=f'command not implemented: {path}')
 ```
 
 #### Route parameters
