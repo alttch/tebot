@@ -71,6 +71,15 @@ with open('image.jpg', 'rb') as fh:
     mybot.send(chat_id, media=fh.read())
 ```
 
+If message is being sent from the handler and *chat_id* is not specified,
+current chat ID is used:
+
+```python
+@mybot.route(path='/start')
+def start(**kwargs):
+    mybot.send('bot started')
+```
+
 ### High level API: routes
 
 **TeBot** has flask-style routes, which may be registered either by calling

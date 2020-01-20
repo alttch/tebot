@@ -50,30 +50,30 @@ def start(chat_id, **kwargs):
 
 @mybot.route(methods='message')
 def my_message(chat_id, text, **kwargs):
-    mybot.send(chat_id, f'got message:\n---\n{text}\n---')
-    mybot.send(chat_id, msg='choose option', reply_markup=reply_markup)
+    mybot.send(msg=f'got message:\n---\n{text}\n---')
+    mybot.send(msg='choose option', reply_markup=reply_markup)
 
 
 @mybot.route(methods='*')
 def default_cmd_handler(chat_id, path, **kwargs):
-    mybot.send(chat_id, f'command not implemented: {path}')
-    mybot.send(chat_id, msg='choose option', reply_markup=reply_markup)
+    mybot.send(msg=f'command not implemented: {path}')
+    mybot.send(msg='choose option', reply_markup=reply_markup)
 
 
 @mybot.route(path='/pic', methods='*')
 def pic(chat_id, **kwargs):
     with open(f'{mydir}/data/cat.jpg', 'rb') as fh:
         media = fh.read()
-    mybot.send(chat_id, msg='test pic', media=media)
-    mybot.send(chat_id, msg='choose option', reply_markup=reply_markup)
+    mybot.send(msg='test pic', media=media)
+    mybot.send(msg='choose option', reply_markup=reply_markup)
 
 
 @mybot.route(path='/vid', methods='*')
 def vid(chat_id, **kwargs):
     with open(f'{mydir}/data/cat.mp4', 'rb') as fh:
         media = fh.read()
-    mybot.send_video(chat_id, msg='test video', media=media)
-    mybot.send(chat_id, msg='choose option', reply_markup=reply_markup)
+    mybot.send_video(msg='test video', media=media)
+    mybot.send(msg='choose option', reply_markup=reply_markup)
 
 
 @mybot.route(path='/alert', methods='query')

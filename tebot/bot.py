@@ -6,6 +6,8 @@ import threading
 
 logger = logging.getLogger('tebot')
 
+g = threading.local()
+
 
 class TeBot(neotasker.BackgroundIntervalWorker):
 
@@ -110,6 +112,7 @@ class TeBot(neotasker.BackgroundIntervalWorker):
         if not chat_id or self.is_duplicate_message(chat_id, message_id):
             return
         text = msg.get('text')
+        g.chat_id = chat_id
         if not text: return
         return self.handle_command(
             chat_id, text, message_id=message_id,
@@ -128,6 +131,8 @@ class TeBot(neotasker.BackgroundIntervalWorker):
         chat_id = chat.get('id')
         if not chat_id or self.is_duplicate_query(chat_id, query_id):
             return
+        g.query_id = query_id
+        g.chat_id = chat_id
         message_id = msg.get('message_id')
         return self.handle_query(chat_id,
                                  query_id,
@@ -208,7 +213,7 @@ class TeBot(neotasker.BackgroundIntervalWorker):
 
     def send(
             self,
-            chat_id,
+            chat_id=None,
             msg='',
             media=None,
             mode='HTML',
@@ -228,6 +233,8 @@ class TeBot(neotasker.BackgroundIntervalWorker):
             mode: formatting mode (default: HTML)
             other API args: passed as-is
         """
+        if chat_id is None:
+            chat_id = g.chat_id
         if media is None:
             return self.send_message(chat_id, msg=msg, mode=mode, **kwargs)
         else:
@@ -248,7 +255,7 @@ class TeBot(neotasker.BackgroundIntervalWorker):
                              mode=mode,
                              **kwargs)
 
-    def send_message(self, chat_id, msg, mode='HTML', **kwargs):
+    def send_message(self, chat_id=None, msg='', mode='HTML', **kwargs):
         """
         Sends text message
 
@@ -258,6 +265,8 @@ class TeBot(neotasker.BackgroundIntervalWorker):
             mode: formatting mode (default: HTML)
             other API args: passed as-is
         """
+        if chat_id is None:
+            chat_id = g.chat_id
         return self.call(
             'sendMessage',
             self._format_payload(
@@ -267,7 +276,12 @@ class TeBot(neotasker.BackgroundIntervalWorker):
                     'parse_mode': mode,
                 }, **kwargs)) is not None
 
-    def send_photo(self, chat_id, media, caption='', mode='HTML', **kwargs):
+    def send_photo(self,
+                   chat_id=None,
+                   media='',
+                   caption='',
+                   mode='HTML',
+                   **kwargs):
         """
         Sends picture file
 
@@ -278,6 +292,8 @@ class TeBot(neotasker.BackgroundIntervalWorker):
             mode: formatting mode (default: HTML)
             other API args: passed as-is
         """
+        if chat_id is None:
+            chat_id = g.chat_id
         return self.call(
             'sendPhoto',
             self._format_payload(
@@ -287,7 +303,12 @@ class TeBot(neotasker.BackgroundIntervalWorker):
                     'parse_mode': mode,
                 }, **kwargs), {'photo': media})
 
-    def send_audio(self, chat_id, media, caption='', mode='HTML', **kwargs):
+    def send_audio(self,
+                   chat_id=None,
+                   media='',
+                   caption='',
+                   mode='HTML',
+                   **kwargs):
         """
         Sends audio file
 
@@ -298,6 +319,8 @@ class TeBot(neotasker.BackgroundIntervalWorker):
             mode: formatting mode (default: HTML)
             other API args: passed as-is
         """
+        if chat_id is None:
+            chat_id = g.chat_id
         return self.call(
             'sendAudio',
             self._format_payload(
@@ -307,7 +330,12 @@ class TeBot(neotasker.BackgroundIntervalWorker):
                     'parse_mode': mode
                 }, **kwargs), {'audio': media})
 
-    def send_video(self, chat_id, media, caption='', mode='HTML', **kwargs):
+    def send_video(self,
+                   chat_id=None,
+                   media='',
+                   caption='',
+                   mode='HTML',
+                   **kwargs):
         """
         Sends video
 
@@ -318,6 +346,8 @@ class TeBot(neotasker.BackgroundIntervalWorker):
             mode: formatting mode (default: HTML)
             other API args: passed as-is
         """
+        if chat_id is None:
+            chat_id = g.chat_id
         return self.call(
             'sendVideo',
             self._format_payload(
@@ -327,7 +357,12 @@ class TeBot(neotasker.BackgroundIntervalWorker):
                     'parse_mode': mode
                 }, **kwargs), {'video': media})
 
-    def send_document(self, chat_id, media, caption='', mode='HTML', **kwargs):
+    def send_document(self,
+                      chat_id=None,
+                      media='',
+                      caption='',
+                      mode='HTML',
+                      **kwargs):
         """
         Sends file of any type
 
@@ -338,6 +373,8 @@ class TeBot(neotasker.BackgroundIntervalWorker):
             mode: formatting mode (default: HTML)
             other API args: passed as-is
         """
+        if chat_id is None:
+            chat_id = g.chat_id
         return self.call(
             'sendDocument',
             self._format_payload(
@@ -347,7 +384,7 @@ class TeBot(neotasker.BackgroundIntervalWorker):
                     'parse_mode': mode
                 }, **kwargs), {'document': media})
 
-    def answer_query(self, query_id, **kwargs):
+    def answer_query(self, query_id=None, **kwargs):
         """
         Answer callback query
 
@@ -355,6 +392,8 @@ class TeBot(neotasker.BackgroundIntervalWorker):
             query_id: callback query id
             other API args: passed as-is
         """
+        if query_id is None:
+            query_id = g.query_id
         return self.call(
             'answerCallbackQuery',
             self._format_query_payload({'callback_query_id': query_id},
