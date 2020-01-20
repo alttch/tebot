@@ -6,28 +6,46 @@ import threading
 
 logger = logging.getLogger('tebot')
 
-_demo_reply_markup = {
-    'inline_keyboard': [[{
-        'text': 'Picture',
-        'callback_data': '/pic'
-    }], [{
-        'text': 'Video',
-        'callback_data': '/vid'
-    }]]
-}
-
 
 class TeBot(neotasker.BackgroundIntervalWorker):
+
+    def route(self, *args, **kwargs):
+
+        def inner(fn):
+            methods = kwargs.get('methods', [])
+            path = kwargs.get('path')
+            self.register_route(fn, path, methods)
+
+        return inner
+
+    def register_route(self, fn, path=None, methods='command'):
+        if not methods:
+            methods = 'command'
+        if not isinstance(methods, tuple) and not isinstance(methods, list):
+            methods = [methods]
+        for method in methods:
+            if method == 'message':
+                if path:
+                    raise ValueError(
+                        'Can not register route with path for messages')
+                else:
+                    self.handle_message = fn
+            if not isinstance(path, tuple) and not isinstance(path, list):
+                path = [path]
+            if method in ('command', '*'):
+                for p in path:
+                    self._command_routes[p] = fn
+            if method in ('query', 'callback_query', '*'):
+                for p in path:
+                    self._query_routes[p] = fn
 
     def handle_message(self, chat_id, text, payload, **kwargs):
         """
         Override to handle text messages
 
-        By default contains simple echo demo
+        By default contains simple echo
         """
-        self.send(chat_id,
-                  msg=f'Got text: {text}',
-                  reply_markup=_demo_reply_markup)
+        self.send(chat_id, msg=f'{text}')
 
     def handle_command(self, chat_id, cmd, payload, **kwargs):
         """
@@ -35,41 +53,23 @@ class TeBot(neotasker.BackgroundIntervalWorker):
 
         By default contains simple demo with a couple of cmds
         """
-        from pathlib import Path
-        mydir = Path(__file__).parent.as_posix()
-        if cmd in ['start', 'help']:
-            from textwrap import dedent
-            self.send(chat_id,
-                      msg=dedent("""
-                <b>Hello, I'm using free Python library
-                https://github.com/alttch/tebot</b>
-                Test commands:
-
-                /pic: send test picture
-                /vid: send test video
-                any cmd: echo it back
-                """),
-                      reply_markup=_demo_reply_markup)
-        elif cmd == 'pic':
-            with open(f'{mydir}/demodata/cat.jpg', 'rb') as fh:
-                media = fh.read()
-            self.send(chat_id, msg='test pic', media=media)
-            self.send(chat_id,
-                      msg='choose option',
-                      reply_markup=_demo_reply_markup)
-        elif cmd == 'vid':
-            with open(f'{mydir}/demodata/cat.mp4', 'rb') as fh:
-                media = fh.read()
-            # it's recommended to send video with send_video method
-            # as filetype.guess sometimes can not detect all formats
-            self.send_video(chat_id, caption='test video', media=media)
-            self.send(chat_id,
-                      msg='choose option',
-                      reply_markup=_demo_reply_markup)
+        path = cmd.split(' ', 1)
+        fn = self._command_routes.get(path[0])
+        if fn is None:
+            fn = self._command_routes.get(None)
+        if fn is None:
+            logger.error(f'No command handler for {path[0]}')
+            return None
         else:
-            self.send(chat_id,
-                      msg=f'Command unknown: {cmd}',
-                      reply_markup=_demo_reply_markup)
+            kwargs['path'] = path[0]
+            try:
+                kwargs['query_string'] = path[1]
+            except:
+                kwargs['query_string'] = None
+            kwargs['chat_id'] = chat_id
+            kwargs['payload'] = payload
+            kwargs['method'] = 'command'
+            return fn(**kwargs)
 
     def handle_query(self, chat_id, query_id, data, payload, **kwargs):
         """
@@ -77,8 +77,27 @@ class TeBot(neotasker.BackgroundIntervalWorker):
 
         By default considers all queries are commands
         """
-        self.handle_command(chat_id, data[1:], **kwargs)
-        return self.answer_query(query_id)
+        path = data.split(' ', 1)
+        fn = self._query_routes.get(path[0])
+        if fn is None:
+            fn = self._query_routes.get(None)
+        if fn is None:
+            logger.error(f'No callback query handler for {path[0]}')
+            return None
+        else:
+            kwargs['chat_id'] = chat_id
+            kwargs['query_id'] = query_id
+            kwargs['path'] = path[0]
+            try:
+                kwargs['query_string'] = path[1]
+            except:
+                kwargs['query_string'] = None
+            kwargs['payload'] = payload
+            kwargs['method'] = 'query'
+            result = fn(**kwargs)
+            if result is None:
+                result = {}
+            return self.answer_query(query_id, **result)
 
     def on_message(self, msg):
         """
@@ -93,7 +112,7 @@ class TeBot(neotasker.BackgroundIntervalWorker):
         text = msg.get('text')
         if not text: return
         return self.handle_command(
-            chat_id, text[1:], message_id=message_id,
+            chat_id, text, message_id=message_id,
             payload=msg) if text.startswith('/') else self.handle_message(
                 chat_id, text, message_id=message_id, payload=msg)
 
@@ -351,6 +370,8 @@ class TeBot(neotasker.BackgroundIntervalWorker):
         self._chat_id_processed_message = {}
         self._chat_id_processed_query = {}
         self._lock = threading.RLock()
+        self._command_routes = {}
+        self._query_routes = {}
         super().__init__(*args, **kwargs)
 
     def run(self, **kwargs):

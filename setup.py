@@ -16,7 +16,6 @@ setuptools.setup(
     url='https://github.com/alttch/tebot',
     packages=setuptools.find_packages(),
     license='MIT',
-    include_package_data=True,
     install_requires=['neotasker', 'filetype'],
     classifiers=(
         'Programming Language :: Python :: 3',
