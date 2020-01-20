@@ -43,7 +43,7 @@ def start(chat_id, **kwargs):
 
                 /pic: send test picture
                 /vid: send test video
-                any cmd: echo it back
+                any text: echo it back
                 """),
                reply_markup=reply_markup)
 
