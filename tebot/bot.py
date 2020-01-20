@@ -125,9 +125,8 @@ class TeBot(neotasker.BackgroundIntervalWorker):
         message_id = msg.get('message_id')
         if not chat_id or self.is_duplicate_message(chat_id, message_id):
             return
-        text = msg.get('text')
+        text = msg.get('text', '')
         g.chat_id = chat_id
-        if not text: return
         return self.handle_command(
             chat_id, text, message_id=message_id,
             payload=msg) if text.startswith('/') else self.handle_message(
@@ -164,6 +163,7 @@ class TeBot(neotasker.BackgroundIntervalWorker):
         """
         if token:
             self.__uri = f'https://api.telegram.org/bot{token}'
+            self.__furi = f'https://api.telegram.org/file/bot{token}'
         self.__token = token
 
     def is_duplicate_message(self, chat_id, message_id):
@@ -413,9 +413,43 @@ class TeBot(neotasker.BackgroundIntervalWorker):
             self._format_query_payload({'callback_query_id': query_id},
                                        **kwargs))
 
+    def get_file(self, file_id):
+        """
+        Get file object
+        """
+        return self.call('getFile', payload={'file_id': file_id})
+
+    def get_file_contents(self, file_id):
+        """
+        Download file by file_id
+        """
+        try:
+            return self.download_file(
+                file_path=self.get_file(file_id)['result']['file_path'])
+        except:
+            return None
+
+    def download_file(self, file_path, retry=None):
+        """
+        Download file by file path
+        """
+        r = requests.get(f'{self.__furi}/{file_path}')
+        if r.ok:
+            return r.content
+        else:
+            logger.error(f'API call failed, code: {r.status_code}')
+            if retry is False or (retry is None and not self.retry_interval):
+                return None
+            time.sleep(self.retry_interval if self.retry_interval else retry)
+            return self.call(func=func,
+                             payload=payload,
+                             files=files,
+                             retry=False)
+
     def __init__(self, *args, **kwargs):
         self.__token = None
         self.__uri = None
+        self.__furi = None
         self.timeout = 10
         self.retry_interval = None
         self.default_reply_markup = None
@@ -441,18 +475,27 @@ class TeBot(neotasker.BackgroundIntervalWorker):
                 elif 'callback_query' in m:
                     self.supervisor.spawn(self.on_query, m['callback_query'])
         else:
-            logger.error('Invalid getUpdates result')
+            logger.warning('Invalid getUpdates result')
 
-    def call(self, func, args=None, files=None, retry=None):
+    def call(self, func, payload=None, files=None, retry=None):
+        """
+        Call API method
+        
+        Args:
+            payload: API call payload
+            files: files
+            retry: False - do not retry, None - default retry, number - retry
+            interval
+        """
         logger.debug(f'Telegram API call {func}')
         if files:
             r = requests.post(f'{self.__uri}/{func}',
-                              data=args,
+                              data=payload,
                               files=files,
                               timeout=self.timeout)
         else:
             r = requests.post(f'{self.__uri}/{func}',
-                              json=args,
+                              json=payload,
                               timeout=self.timeout)
         if r.ok:
             result = r.json()
@@ -461,8 +504,11 @@ class TeBot(neotasker.BackgroundIntervalWorker):
             logger.error(f'API call failed, code: {r.status_code}')
             if retry is False or (retry is None and not self.retry_interval):
                 return None
-            time.sleep(self.retry_interval)
-            return self.call(func=func, args=args, files=files, retry=False)
+            time.sleep(self.retry_interval if self.retry_interval else retry)
+            return self.call(func=func,
+                             payload=payload,
+                             files=files,
+                             retry=False)
 
     def _format_payload(self, payload, **kwargs):
         payload.update(kwargs)

@@ -80,6 +80,19 @@ def start(**kwargs):
     mybot.send(text='bot started')
 ```
 
+### Download files
+
+```python
+def somehandler(**kwargs):
+    payload = kwargs.get('payload')
+    if 'document' in payload:
+        content = mybot.get_file_contents(payload['document'].get('file_id'))
+        if 'content' is None:
+            # unable to download file
+        else:
+            # process file content
+```
+
 ### High-level API: routes
 
 **TeBot** has flask-style routes, which may be registered either by calling

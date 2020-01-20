@@ -43,14 +43,26 @@ def start(chat_id, **kwargs):
 
                 /pic: send test picture
                 /vid: send test video
-                any text: echo it back
+                any text: will echo it back
+                file: will calculate its sha256 sum
                 """),
                reply_markup=reply_markup)
 
 
 @mybot.route(methods='message')
-def my_message(chat_id, text, **kwargs):
-    mybot.send(text=f'got message:\n---\n{text}\n---')
+def my_message(chat_id, text, payload, **kwargs):
+    if 'photo' in payload or 'video' in payload or 'audio' in payload:
+        mybot.send(text='please send media as a file')
+    elif 'document' in payload:
+        data = mybot.get_file_contents(payload['document'].get('file_id'))
+        if data is None:
+            mybot.send(text='unable to download file')
+        else:
+            import hashlib
+            h = hashlib.sha256(data).hexdigest()
+            mybot.send(text=f'SHA256: {h}')
+    else:
+        mybot.send(text=f'got message:\n---\n{text}\n---')
     mybot.send(text='choose option', reply_markup=reply_markup)
 
 
