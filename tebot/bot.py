@@ -134,7 +134,7 @@ class TeBot(neotasker.BackgroundIntervalWorker):
         with self.lock:
             if chat_id in self._chat_id_processed_message and \
                     self._chat_id_processed_message[
-                    chat_id] >= message_id:
+                    chat_id] == message_id:
                 return True
             else:
                 self._chat_id_processed_message[chat_id] = message_id
