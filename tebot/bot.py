@@ -133,7 +133,7 @@ class TeBot(neotasker.BackgroundIntervalWorker):
 
         Called automatically by default on_message
         """
-        with self.lock:
+        with self._lock:
             if chat_id in self._chat_id_processed_message and \
                     self._chat_id_processed_message[
                     chat_id] == message_id:
@@ -148,7 +148,7 @@ class TeBot(neotasker.BackgroundIntervalWorker):
 
         Called automatically by default on_query
         """
-        with self.lock:
+        with self._lock:
             if chat_id in self._chat_id_processed_query and \
                     self._chat_id_processed_query[
                     chat_id] == query_id:
@@ -161,13 +161,13 @@ class TeBot(neotasker.BackgroundIntervalWorker):
         """
         Serialize bot data to prevent duplicates after restart
         """
-        return {'update_offset': self.update_offset}
+        return {'update_offset': self._update_offset}
 
     def load(self, state):
         """
         Load serialized data (usually before start)
         """
-        self.update_offset = state.get('update_offset', 0)
+        self._update_offset = state.get('update_offset', 0)
 
     def is_ready(self):
         """
@@ -345,17 +345,17 @@ class TeBot(neotasker.BackgroundIntervalWorker):
         self.__uri = None
         self.timeout = 10
         self.retry_interval = None
-        self.update_offset = 0
+        self.default_reply_markup = None
+        self._update_offset = 0
         self._chat_id_processed_message = {}
         self._chat_id_processed_query = {}
-        self.lock = threading.RLock()
-        self.default_reply_markup = None
+        self._lock = threading.RLock()
         super().__init__(*args, **kwargs)
 
     def run(self, **kwargs):
         if not self.__token:
             raise RuntimeError('token not provided')
-        result = self.call('getUpdates', {'offset': self.update_offset + 1})
+        result = self.call('getUpdates', {'offset': self._update_offset + 1})
         if result and 'result' in result:
             for m in result['result']:
                 if 'message' in m:
@@ -363,8 +363,8 @@ class TeBot(neotasker.BackgroundIntervalWorker):
                 elif 'callback_query' in m:
                     result = self.on_query(m['callback_query'])
                 update_id = m.get('update_id')
-                if update_id and update_id > self.update_offset:
-                    self.update_offset = update_id
+                if update_id and update_id > self._update_offset:
+                    self._update_offset = update_id
                 if result is False:
                     return False
         else:
