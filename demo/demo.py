@@ -69,7 +69,7 @@ def pic(chat_id, **kwargs):
 
 
 @mybot.route(path='/alert', methods='query')
-def search(**kwargs):
+def alert(**kwargs):
     return {'text': 'ACHTUNG!!! DIE KATZE!!!', 'show_alert': True}
 
 
