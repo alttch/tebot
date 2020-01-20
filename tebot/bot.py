@@ -39,13 +39,13 @@ class TeBot(neotasker.BackgroundIntervalWorker):
                 for p in path:
                     self._query_routes[p] = fn
 
-    def handle_message(self, chat_id, text, payload, **kwargs):
+    def handle_message(self, **kwargs):
         """
         Override to handle text messages
 
         By default contains simple echo
         """
-        self.send(chat_id, msg=f'{text}')
+        self.send(kwargs.get('chat_id'), msg=kwargs.get('text'))
 
     def handle_command(self, chat_id, cmd, payload, **kwargs):
         """
@@ -114,7 +114,7 @@ class TeBot(neotasker.BackgroundIntervalWorker):
         return self.handle_command(
             chat_id, text, message_id=message_id,
             payload=msg) if text.startswith('/') else self.handle_message(
-                chat_id, text, message_id=message_id, payload=msg)
+                chat_id=chat_id, text=text, message_id=message_id, payload=msg)
 
     def on_query(self, query):
         """
