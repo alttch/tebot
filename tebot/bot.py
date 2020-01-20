@@ -47,7 +47,7 @@ class TeBot(neotasker.BackgroundIntervalWorker):
 
         By default contains simple echo
         """
-        self.send(kwargs.get('chat_id'), msg=kwargs.get('text'))
+        self.send(kwargs.get('chat_id'), text=kwargs.get('text'))
 
     def handle_command(self, chat_id, cmd, payload, **kwargs):
         """
@@ -214,7 +214,7 @@ class TeBot(neotasker.BackgroundIntervalWorker):
     def send(
             self,
             chat_id=None,
-            msg='',
+            text='',
             media=None,
             mode='HTML',
             **kwargs,
@@ -236,7 +236,7 @@ class TeBot(neotasker.BackgroundIntervalWorker):
         if chat_id is None:
             chat_id = g.chat_id
         if media is None:
-            return self.send_message(chat_id, msg=msg, mode=mode, **kwargs)
+            return self.send_message(chat_id, text=text, mode=mode, **kwargs)
         else:
             import filetype
             ft = filetype.guess(media)
@@ -251,11 +251,11 @@ class TeBot(neotasker.BackgroundIntervalWorker):
                 send_func = self.send_document
             return send_func(chat_id,
                              media=media,
-                             caption=msg,
+                             caption=text,
                              mode=mode,
                              **kwargs)
 
-    def send_message(self, chat_id=None, msg='', mode='HTML', **kwargs):
+    def send_message(self, chat_id=None, text='', mode='HTML', **kwargs):
         """
         Sends text message
 
@@ -272,7 +272,7 @@ class TeBot(neotasker.BackgroundIntervalWorker):
             self._format_payload(
                 {
                     'chat_id': chat_id,
-                    'text': msg,
+                    'text': text,
                     'parse_mode': mode,
                 }, **kwargs)) is not None
 
