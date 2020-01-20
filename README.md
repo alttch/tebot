@@ -104,7 +104,7 @@ def default_cmd_handler(chat_id, path, **kwargs):
 
 * **methods** can be either a string or a list/tuple. Valid values are:
   "message", "command" (default if no methods specified) and
-  "query"/"callback_query". If "\*" specified, the method is registered for
+  "query" / "callback_query". If "\*" specified, the method is registered for
   both commands and callback queries
 
 
