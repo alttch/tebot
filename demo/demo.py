@@ -68,17 +68,17 @@ def pic(chat_id, **kwargs):
     mybot.send(chat_id, msg='choose option', reply_markup=reply_markup)
 
 
-@mybot.route(path='/alert', methods='query')
-def alert(**kwargs):
-    return {'text': 'ACHTUNG!!! DIE KATZE!!!', 'show_alert': True}
-
-
 @mybot.route(path='/vid', methods='*')
 def vid(chat_id, **kwargs):
     with open(f'{mydir}/data/cat.mp4', 'rb') as fh:
         media = fh.read()
     mybot.send_video(chat_id, msg='test video', media=media)
     mybot.send(chat_id, msg='choose option', reply_markup=reply_markup)
+
+
+@mybot.route(path='/alert', methods='query')
+def alert(**kwargs):
+    return {'text': 'ACHTUNG!!! DIE KATZE!!!', 'show_alert': True}
 
 
 task_supervisor.create_aloop('default', default=True)
