@@ -112,9 +112,9 @@ def default_cmd_handler(chat_id, path, **kwargs):
 
 The following kwargs are sent to registered methods:
 
-* **path** command path (e.g. "/select" for "/select * from data")
+* **path** command path (e.g. "/select" for "/select \* from data")
 
-* **query string** command query string (e.g. "* from data" for the above
+* **query_string** command query string (e.g. "\* from data" for the above
   example)
 
 * **chat_id** current chat id
