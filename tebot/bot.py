@@ -380,15 +380,13 @@ class TeBot(neotasker.BackgroundIntervalWorker):
         result = self.call('getUpdates', {'offset': self._update_offset + 1})
         if result and 'result' in result:
             for m in result['result']:
-                if 'message' in m:
-                    result = self.on_message(m['message'])
-                elif 'callback_query' in m:
-                    result = self.on_query(m['callback_query'])
                 update_id = m.get('update_id')
                 if update_id and update_id > self._update_offset:
                     self._update_offset = update_id
-                if result is False:
-                    return False
+                if 'message' in m:
+                    self.supervisor.spawn(self.on_message, m['message'])
+                elif 'callback_query' in m:
+                    self.supervisor.spawn(self.on_query, m['callback_query'])
         else:
             logger.error('Invalid getUpdates result')
 
