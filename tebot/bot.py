@@ -6,18 +6,30 @@ import threading
 
 logger = logging.getLogger('tebot')
 
+_demo_reply_markup = {
+    'inline_keyboard': [[{
+        'text': 'Picture',
+        'callback_data': '/pic'
+    }], [{
+        'text': 'Video',
+        'callback_data': '/vid'
+    }]]
+}
+
 
 class TeBot(neotasker.BackgroundIntervalWorker):
 
-    def handle_message(self, chat_id, text):
+    def handle_message(self, chat_id, text, **kwargs):
         """
         Override to handle text messages
 
         By default contains simple echo demo
         """
-        self.send(chat_id, msg=f'Got text: {text}')
+        self.send(chat_id,
+                  msg=f'Got text: {text}',
+                  reply_markup=_demo_reply_markup)
 
-    def handle_command(self, chat_id, cmd):
+    def handle_command(self, chat_id, cmd, **kwargs):
         """
         Override to handle commands
 
@@ -27,9 +39,8 @@ class TeBot(neotasker.BackgroundIntervalWorker):
         mydir = Path(__file__).parent.as_posix()
         if cmd in ['start', 'help']:
             from textwrap import dedent
-            self.send_message(
-                chat_id,
-                dedent("""
+            self.send(chat_id,
+                      msg=dedent("""
                 <b>Hello, I'm using free Python library
                 https://github.com/alttch/tebot</b>
                 Test commands:
@@ -37,19 +48,35 @@ class TeBot(neotasker.BackgroundIntervalWorker):
                 /pic: send test picture
                 /vid: send test video
                 any cmd: echo it back
-                """))
+                """),
+                      reply_markup=_demo_reply_markup)
         elif cmd == 'pic':
             with open(f'{mydir}/demodata/cat.jpg', 'rb') as fh:
                 media = fh.read()
             self.send(chat_id, msg='test pic', media=media)
+            self.send(chat_id,
+                      msg='choose option',
+                      reply_markup=_demo_reply_markup)
         elif cmd == 'vid':
             with open(f'{mydir}/demodata/cat.mp4', 'rb') as fh:
                 media = fh.read()
             # it's recommended to send video with send_video method
             # as filetype.guess sometimes can not detect all formats
             self.send_video(chat_id, caption='test video', media=media)
+            # self.send(chat_id, reply_markup=_demo_reply_markup)
         else:
-            self.send(chat_id, msg=f'Command unknown: {cmd}')
+            self.send(chat_id,
+                      msg=f'Command unknown: {cmd}',
+                      reply_markup=_demo_reply_markup)
+
+    def handle_query(self, chat_id, query_id, data, **kwargs):
+        """
+        Override to handle queries
+
+        By default considers all queries are commands
+        """
+        self.handle_command(chat_id, data[1:], **kwargs)
+        return self.answer_query(query_id)
 
     def on_message(self, msg):
         """
@@ -58,14 +85,33 @@ class TeBot(neotasker.BackgroundIntervalWorker):
         chat = msg.get('chat')
         if not chat: return
         chat_id = chat.get('id')
-        if not chat_id or self.is_duplicate(msg.get('message_id'), chat_id):
+        message_id = msg.get('message_id')
+        if not chat_id or self.is_duplicate_message(chat_id, message_id):
             return
         text = msg.get('text')
         if not text: return
-        text = text.split('@')[0]
-        return self.handle_command(
-            chat_id, text[1:]) if text.startswith('/') else self.handle_message(
-                chat_id, text)
+        return self.handle_command(chat_id, text[1:],
+                                   message_id=message_id) if text.startswith(
+                                       '/') else self.handle_message(
+                                           chat_id, text, message_id=message_id)
+
+    def on_query(self, query):
+        """
+        Override to implement extended query handling
+        """
+        query_id = query.get('id')
+        msg = query.get('message')
+        if not msg: return
+        chat = msg.get('chat')
+        if not chat: return
+        chat_id = chat.get('id')
+        if not chat_id or self.is_duplicate_query(chat_id, query_id):
+            return
+        message_id = msg.get('message_id')
+        return self.handle_query(chat_id,
+                                 query_id,
+                                 query.get('data'),
+                                 message_id=message_id)
 
     def set_token(self, token=None):
         """
@@ -79,18 +125,32 @@ class TeBot(neotasker.BackgroundIntervalWorker):
             self.__uri = f'https://api.telegram.org/bot{token}'
         self.__token = token
 
-    def is_duplicate(self, msg_id, chat_id):
+    def is_duplicate_message(self, chat_id, message_id):
         """
         Filters duplicate messages
 
         Called automatically by default on_message
         """
         with self.lock:
-            if chat_id in self._chat_id_processed and self._chat_id_processed[
-                    chat_id] >= msg_id:
+            if chat_id in self._chat_id_processed_message and self._chat_id_processed_message[
+                    chat_id] >= message_id:
                 return True
             else:
-                self._chat_id_processed[chat_id] = msg_id
+                self._chat_id_processed_message[chat_id] = message_id
+                return False
+
+    def is_duplicate_query(self, chat_id, query_id):
+        """
+        Filters duplicate querys
+
+        Called automatically by default on_query
+        """
+        with self.lock:
+            if chat_id in self._chat_id_processed_query and self._chat_id_processed_query[
+                    chat_id] == query_id:
+                return True
+            else:
+                self._chat_id_processed_query[chat_id] = query_id
                 return False
 
     def serialize(self):
@@ -122,13 +182,14 @@ class TeBot(neotasker.BackgroundIntervalWorker):
         result = self.call('getMe')
         return result
 
-    def send(self,
-             chat_id,
-             msg='',
-             media=None,
-             mode='HTML',
-             disable_preview=False,
-             quiet=False):
+    def send(
+            self,
+            chat_id,
+            msg='',
+            media=None,
+            mode='HTML',
+            **kwargs,
+    ):
         """
         Universal send method
 
@@ -141,11 +202,10 @@ class TeBot(neotasker.BackgroundIntervalWorker):
             msg: message text
             media: media to send
             mode: formatting mode (default: HTML)
-            disable_preview: disable web page preview
-            quiet: send quiet message (without notification)
+            other API args: passed as-is
         """
         if media is None:
-            return self.send_message(chat_id, msg, mode, disable_preview, quiet)
+            return self.send_message(chat_id, msg=msg, mode=mode, **kwargs)
         else:
             import filetype
             ft = filetype.guess(media)
@@ -158,14 +218,13 @@ class TeBot(neotasker.BackgroundIntervalWorker):
                 send_func = self.send_audio
             else:
                 send_func = self.send_document
-            return send_func(chat_id, media, msg, mode, quiet)
+            return send_func(chat_id,
+                             media=media,
+                             caption=msg,
+                             mode=mode,
+                             **kwargs)
 
-    def send_message(self,
-                     chat_id,
-                     msg,
-                     mode='HTML',
-                     disable_preview=False,
-                     quiet=False):
+    def send_message(self, chat_id, msg, mode='HTML', **kwargs):
         """
         Sends text message
 
@@ -173,19 +232,18 @@ class TeBot(neotasker.BackgroundIntervalWorker):
             chat_id: chat id
             msg: message text
             mode: formatting mode (default: HTML)
-            disable_preview: disable web page preview
-            quiet: send quiet message (without notification)
+            other API args: passed as-is
         """
         return self.call(
-            'sendMessage', {
-                'chat_id': chat_id,
-                'text': msg,
-                'parse_mode': mode,
-                'disable_web_page_preview': disable_preview,
-                'disable_notification': quiet
-            }) is not None
+            'sendMessage',
+            self._format_payload(
+                {
+                    'chat_id': chat_id,
+                    'text': msg,
+                    'parse_mode': mode,
+                }, **kwargs)) is not None
 
-    def send_photo(self, chat_id, media, caption='', mode='HTML', quiet=False):
+    def send_photo(self, chat_id, media, caption='', mode='HTML', **kwargs):
         """
         Sends picture file
 
@@ -194,18 +252,18 @@ class TeBot(neotasker.BackgroundIntervalWorker):
             media: binary data
             caption: caption text
             mode: formatting mode (default: HTML)
-            disable_preview: disable web page preview
-            quiet: send quiet message (without notification)
+            other API args: passed as-is
         """
         return self.call(
-            'sendPhoto', {
-                'chat_id': chat_id,
-                'caption': caption,
-                'parse_mode': mode,
-                'disable_notification': quiet
-            }, {'photo': media})
+            'sendPhoto',
+            self._format_payload(
+                {
+                    'chat_id': chat_id,
+                    'caption': caption,
+                    'parse_mode': mode,
+                }, **kwargs), {'photo': media})
 
-    def send_audio(self, chat_id, media, caption='', mode='HTML', quiet=False):
+    def send_audio(self, chat_id, media, caption='', mode='HTML', **kwargs):
         """
         Sends audio file
 
@@ -214,18 +272,18 @@ class TeBot(neotasker.BackgroundIntervalWorker):
             media: binary data
             caption: caption text
             mode: formatting mode (default: HTML)
-            disable_preview: disable web page preview
-            quiet: send quiet message (without notification)
+            other API args: passed as-is
         """
         return self.call(
-            'sendAudio', {
-                'chat_id': chat_id,
-                'caption': caption,
-                'parse_mode': mode,
-                'disable_notification': quiet
-            }, {'audio': media})
+            'sendAudio',
+            self._format_payload(
+                {
+                    'chat_id': chat_id,
+                    'caption': caption,
+                    'parse_mode': mode
+                }, **kwargs), {'audio': media})
 
-    def send_video(self, chat_id, media, caption='', quiet=False):
+    def send_video(self, chat_id, media, caption='', mode='HTML', **kwargs):
         """
         Sends video
 
@@ -234,23 +292,18 @@ class TeBot(neotasker.BackgroundIntervalWorker):
             caption: caption text
             media: binary data
             mode: formatting mode (default: HTML)
-            disable_preview: disable web page preview
-            quiet: send quiet message (without notification)
+            other API args: passed as-is
         """
         return self.call(
-            'sendVideo', {
-                'chat_id': chat_id,
-                'caption': caption,
-                'parse_mode': 'HTML',
-                'disable_notification': quiet
-            }, {'video': media})
+            'sendVideo',
+            self._format_payload(
+                {
+                    'chat_id': chat_id,
+                    'caption': caption,
+                    'parse_mode': mode
+                }, **kwargs), {'video': media})
 
-    def send_document(self,
-                      chat_id,
-                      media,
-                      caption='',
-                      mode='HTML',
-                      quiet=False):
+    def send_document(self, chat_id, media, caption='', mode='HTML', **kwargs):
         """
         Sends file of any type
 
@@ -259,16 +312,29 @@ class TeBot(neotasker.BackgroundIntervalWorker):
             media: binary data
             caption: caption text
             mode: formatting mode (default: HTML)
-            disable_preview: disable web page preview
-            quiet: send quiet message (without notification)
+            other API args: passed as-is
         """
         return self.call(
-            'sendDocument', {
-                'chat_id': chat_id,
-                'caption': caption,
-                'parse_mode': mode,
-                'disable_notification': quiet
-            }, {'document': media})
+            'sendDocument',
+            self._format_payload(
+                {
+                    'chat_id': chat_id,
+                    'caption': caption,
+                    'parse_mode': mode
+                }, **kwargs), {'document': media})
+
+    def answer_query(self, query_id, **kwargs):
+        """
+        Answer callback query
+
+        Args:
+            query_id: callback query id
+            other API args: passed as-is
+        """
+        return self.call(
+            'answerCallbackQuery',
+            self._format_query_payload({'callback_query_id': query_id},
+                                       **kwargs))
 
     def __init__(self, *args, **kwargs):
         self.__token = None
@@ -276,8 +342,10 @@ class TeBot(neotasker.BackgroundIntervalWorker):
         self.timeout = 10
         self.retry_interval = None
         self.update_offset = 0
-        self._chat_id_processed = {}
+        self._chat_id_processed_message = {}
+        self._chat_id_processed_query = {}
         self.lock = threading.RLock()
+        self.default_reply_markup = None
         super().__init__(*args, **kwargs)
 
     def run(self, **kwargs):
@@ -288,6 +356,8 @@ class TeBot(neotasker.BackgroundIntervalWorker):
             for m in result['result']:
                 if 'message' in m:
                     result = self.on_message(m['message'])
+                elif 'callback_query' in m:
+                    result = self.on_query(m['callback_query'])
                 update_id = m.get('update_id')
                 if update_id and update_id > self.update_offset:
                     self.update_offset = update_id
@@ -316,3 +386,17 @@ class TeBot(neotasker.BackgroundIntervalWorker):
                 return None
             time.sleep(self.retry_interval)
             return self.call(func=func, args=args, files=files, retry=False)
+
+    def _format_payload(self, payload, **kwargs):
+        payload.update(kwargs)
+        if 'reply_markup' in payload:
+            if payload['reply_markup'] is None:
+                del payload['reply_markup']
+        else:
+            if self.default_reply_markup:
+                payload['reply_markup'] = self.default_reply_markup
+        return payload
+
+    def _format_query_payload(self, payload, **kwargs):
+        payload.update(kwargs)
+        return payload
