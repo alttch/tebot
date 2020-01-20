@@ -80,7 +80,7 @@ def start(**kwargs):
     mybot.send(text='bot started')
 ```
 
-### High level API: routes
+### High-level API: routes
 
 **TeBot** has flask-style routes, which may be registered either by calling
 
