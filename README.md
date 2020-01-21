@@ -98,7 +98,7 @@ def somehandler(**kwargs):
 **TeBot** has flask-style routes, which may be registered either by calling
 
 ```python
-    mybot.register_handler(fn, path, methods)
+    mybot.register_route(fn, path, methods)
 ```
 
 or with function decorator:
