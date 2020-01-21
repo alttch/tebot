@@ -34,9 +34,8 @@ with open(mydir + '/../demo_tebot_token.dat') as fh:
 
 
 @mybot.route(path=['/start', '/help'])
-def start(chat_id, **kwargs):
-    mybot.send(chat_id,
-               text=dedent("""
+def start(**kwargs):
+    mybot.send(dedent("""
                 <b>Hello, I'm using free Python library
                 https://github.com/alttch/tebot</b>
                 Test commands:
@@ -50,42 +49,42 @@ def start(chat_id, **kwargs):
 
 
 @mybot.route(methods='message')
-def my_message(chat_id, text, payload, **kwargs):
+def my_message(text, payload, **kwargs):
     if 'photo' in payload or 'video' in payload or 'audio' in payload:
-        mybot.send(text='please send media as a file')
+        mybot.send('please send media as a file')
     elif 'document' in payload:
         data = mybot.get_file_contents(payload['document'].get('file_id'))
         if data is None:
-            mybot.send(text='unable to download file')
+            mybot.send('unable to download file')
         else:
             import hashlib
             h = hashlib.sha256(data).hexdigest()
-            mybot.send(text=f'SHA256: {h}')
+            mybot.send(f'SHA256: {h}')
     else:
-        mybot.send(text=f'got message:\n---\n{text}\n---')
-    mybot.send(text='choose option', reply_markup=reply_markup)
+        mybot.send(f'got message:\n---\n{text}\n---')
+    mybot.send('choose an option', reply_markup=reply_markup)
 
 
 @mybot.route(methods='*')
-def default_cmd_handler(chat_id, path, **kwargs):
-    mybot.send(text=f'command not implemented: {path}')
-    mybot.send(text='choose option', reply_markup=reply_markup)
+def default_cmd_handler(path, **kwargs):
+    mybot.send(f'command not implemented: {path}')
+    mybot.send('choose an option', reply_markup=reply_markup)
 
 
 @mybot.route(path='/pic', methods='*')
-def pic(chat_id, **kwargs):
+def pic(**kwargs):
     with open(f'{mydir}/data/cat.jpg', 'rb') as fh:
         media = fh.read()
-    mybot.send(text='test pic', media=media)
-    mybot.send(text='choose option', reply_markup=reply_markup)
+    mybot.send('test pic', media=media)
+    mybot.send('choose an option', reply_markup=reply_markup)
 
 
 @mybot.route(path='/vid', methods='*')
-def vid(chat_id, **kwargs):
+def vid(**kwargs):
     with open(f'{mydir}/data/cat.mp4', 'rb') as fh:
         media = fh.read()
     mybot.send_video(text='test video', media=media)
-    mybot.send(text='choose option', reply_markup=reply_markup)
+    mybot.send('choose an option', reply_markup=reply_markup)
 
 
 @mybot.route(path='/alert', methods='query')

@@ -65,10 +65,10 @@ with open('bot-state.json', 'w') as fh:
 
 ```python
 # text
-mybot.send(chat_id, text='hello world')
+mybot.send(text='hello world', chat_id=chat_id)
 # files
 with open('image.jpg', 'rb') as fh:
-    mybot.send(chat_id, media=fh.read())
+    mybot.send(media=fh.read(), chat_id=chat_id)
 ```
 
 If message is being sent from the handler and *chat_id* is not specified,
@@ -77,7 +77,7 @@ current chat ID is used:
 ```python
 @mybot.route(path='/start')
 def start(**kwargs):
-    mybot.send(text='bot started')
+    mybot.send('bot started')
 ```
 
 ### Download files
@@ -111,13 +111,13 @@ def my_message(chat_id, text, **kwargs):
 
 # command handler for /start and /help
 @mybot.route(path=['/start', '/help'])
-def start(chat_id, **kwargs):
-    mybot.send(chat_id, text='got HELP command')
+def start(**kwargs):
+    mybot.send('got HELP command')
 
 # command and callback query handler
 @mybot.route(methods='*')
-def default_cmd_handler(chat_id, path, **kwargs):
-    mybot.send(chat_id, text=f'command not implemented: {path}')
+def default_cmd_handler(path, **kwargs):
+    mybot.send(f'command not implemented: {path}')
 ```
 
 #### Route parameters

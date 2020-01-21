@@ -55,13 +55,13 @@ class TeBot(neotasker.BackgroundIntervalWorker):
                 for p in path:
                     self._query_routes[p] = fn
 
-    def handle_message(self, **kwargs):
+    def handle_message(self, text, **kwargs):
         """
         Override to handle text messages
 
         By default contains simple echo
         """
-        self.send(kwargs.get('chat_id'), text=kwargs.get('text'))
+        self.send(text=text)
 
     def handle_command(self, chat_id, cmd, payload, **kwargs):
         """
@@ -227,8 +227,8 @@ class TeBot(neotasker.BackgroundIntervalWorker):
 
     def send(
             self,
-            chat_id=None,
             text='',
+            chat_id=None,
             media=None,
             mode='HTML',
             **kwargs,
@@ -241,16 +241,19 @@ class TeBot(neotasker.BackgroundIntervalWorker):
         If media is not None, tries to detect media type automatically
 
         Args:
-            chat_id: chat id
-            msg: message text
+            text: message text
             media: media to send
+            chat_id: chat id
             mode: formatting mode (default: HTML)
             other API args: passed as-is
         """
         if chat_id is None:
             chat_id = g.chat_id
         if media is None:
-            return self.send_message(chat_id, text=text, mode=mode, **kwargs)
+            return self.send_message(text=text,
+                                     chat_id=chat_id,
+                                     mode=mode,
+                                     **kwargs)
         else:
             import filetype
             ft = filetype.guess(media)
@@ -263,9 +266,9 @@ class TeBot(neotasker.BackgroundIntervalWorker):
                 send_func = self.send_audio
             else:
                 send_func = self.send_document
-            return send_func(chat_id,
-                             media=media,
+            return send_func(media=media,
                              caption=text,
+                             chat_id=chat_id,
                              mode=mode,
                              **kwargs)
 
@@ -274,8 +277,8 @@ class TeBot(neotasker.BackgroundIntervalWorker):
         Sends text message
 
         Args:
+            text: message text
             chat_id: chat id
-            msg: message text
             mode: formatting mode (default: HTML)
             other API args: passed as-is
         """
@@ -291,18 +294,18 @@ class TeBot(neotasker.BackgroundIntervalWorker):
                 }, **kwargs)) is not None
 
     def send_photo(self,
-                   chat_id=None,
                    media='',
                    caption='',
+                   chat_id=None,
                    mode='HTML',
                    **kwargs):
         """
         Sends picture file
 
         Args:
-            chat_id: chat id
             media: binary data
             caption: caption text
+            chat_id: chat id
             mode: formatting mode (default: HTML)
             other API args: passed as-is
         """
@@ -318,18 +321,18 @@ class TeBot(neotasker.BackgroundIntervalWorker):
                 }, **kwargs), {'photo': media})
 
     def send_audio(self,
-                   chat_id=None,
                    media='',
                    caption='',
+                   chat_id=None,
                    mode='HTML',
                    **kwargs):
         """
         Sends audio file
 
         Args:
-            chat_id: chat id
             media: binary data
             caption: caption text
+            chat_id: chat id
             mode: formatting mode (default: HTML)
             other API args: passed as-is
         """
@@ -345,18 +348,18 @@ class TeBot(neotasker.BackgroundIntervalWorker):
                 }, **kwargs), {'audio': media})
 
     def send_video(self,
-                   chat_id=None,
                    media='',
                    caption='',
+                   chat_id=None,
                    mode='HTML',
                    **kwargs):
         """
         Sends video
 
         Args:
-            chat_id: chat id
-            caption: caption text
             media: binary data
+            caption: caption text
+            chat_id: chat id
             mode: formatting mode (default: HTML)
             other API args: passed as-is
         """
@@ -372,18 +375,18 @@ class TeBot(neotasker.BackgroundIntervalWorker):
                 }, **kwargs), {'video': media})
 
     def send_document(self,
-                      chat_id=None,
                       media='',
                       caption='',
+                      chat_id=None,
                       mode='HTML',
                       **kwargs):
         """
         Sends file of any type
 
         Args:
-            chat_id: chat id
             media: binary data
             caption: caption text
+            chat_id: chat id
             mode: formatting mode (default: HTML)
             other API args: passed as-is
         """
