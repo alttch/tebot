@@ -83,7 +83,7 @@ def pic(**kwargs):
 def vid(**kwargs):
     with open(f'{mydir}/data/cat.mp4', 'rb') as fh:
         media = fh.read()
-    mybot.send_video(text='test video', media=media)
+    mybot.send_video(caption='test video', media=media)
     mybot.send('choose an option', reply_markup=reply_markup)
 
 
