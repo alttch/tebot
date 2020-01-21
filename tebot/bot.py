@@ -422,7 +422,7 @@ class TeBot(neotasker.BackgroundIntervalWorker):
         """
         return self.call('getFile', payload={'file_id': file_id})
 
-    def get_file_contents(self, file_id):
+    def get_file_content(self, file_id):
         """
         Download file by file_id
         """

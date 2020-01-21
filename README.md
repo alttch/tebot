@@ -86,7 +86,7 @@ def start(**kwargs):
 def somehandler(**kwargs):
     payload = kwargs.get('payload')
     if 'document' in payload:
-        content = mybot.get_file_contents(payload['document'].get('file_id'))
+        content = mybot.get_file_content(payload['document'].get('file_id'))
         if 'content' is None:
             # unable to download file
         else:
