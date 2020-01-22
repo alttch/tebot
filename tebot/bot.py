@@ -449,6 +449,20 @@ class TeBot(neotasker.BackgroundIntervalWorker):
                              files=files,
                              retry=False)
 
+    def set_webhook(self, url, **kwargs):
+        """
+        Set bot webhook
+        """
+        payload = kwargs.copy()
+        payload['url'] = url
+        return self.call('setWebhook', payload=payload)
+
+    def delete_webhook(self):
+        """
+        Delete bot webhook
+        """
+        return self.call('deleteWebhook')
+
     def __init__(self, *args, **kwargs):
         self.__token = None
         self.__uri = None
@@ -464,19 +478,22 @@ class TeBot(neotasker.BackgroundIntervalWorker):
         self._query_routes = {}
         super().__init__(*args, **kwargs)
 
+    def process_update(self, payload):
+        update_id = payload.get('update_id')
+        if update_id and update_id > self._update_offset:
+            self._update_offset = update_id
+        if 'message' in payload:
+            self.supervisor.spawn(self.on_message, payload['message'])
+        elif 'callback_query' in payload:
+            self.supervisor.spawn(self.on_query, payload['callback_query'])
+
     def run(self, **kwargs):
         if not self.__token:
             raise RuntimeError('token not provided')
         result = self.call('getUpdates', {'offset': self._update_offset + 1})
         if result and 'result' in result:
             for m in result['result']:
-                update_id = m.get('update_id')
-                if update_id and update_id > self._update_offset:
-                    self._update_offset = update_id
-                if 'message' in m:
-                    self.supervisor.spawn(self.on_message, m['message'])
-                elif 'callback_query' in m:
-                    self.supervisor.spawn(self.on_query, m['callback_query'])
+                self.process_update(m)
         else:
             logger.warning('Invalid getUpdates result')
 

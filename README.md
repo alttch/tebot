@@ -173,7 +173,7 @@ Override class methods:
 
 * **on_query** override to implement advanced callback query handling
 
-# Bot options
+## Bot options
 
 ```python
 mybot.timeout = 5 # set Telegram API timeout (default: 10 sec)
@@ -181,6 +181,18 @@ mybot.retry_interval = 1 # if API command fails, re-send it in 1 second
                          # (default: None, don't re-send)
 ```
 
-### Everything else
+## Web hooks
+
+To use web hooks, init bot object, **but don't start it**. Use
+*process_update(payload)* method to process webhook payloads.
+
+TeBot doesn't have own web server module, you may use any available.
+
+To register webhook, use *set_webhook* bot object method (args are the same as
+for https://core.telegram.org/bots/api#setwebhook)
+
+To delete webhook, use *delete_webhook* bot object method (no args required).
+
+## Everything else
 
 Refer to function pydoc for more info.
