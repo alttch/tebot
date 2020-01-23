@@ -425,16 +425,21 @@ class TeBot(neotasker.BackgroundIntervalWorker):
     def get_file_content(self, file_id):
         """
         Download file by file_id
+
+        Raises:
+            RuntimeError: if file can't be downloaded
+            Other: requests module exceptions
         """
-        try:
-            return self.download_file(
-                file_path=self.get_file(file_id)['result']['file_path'])
-        except:
-            return None
+        return self.download_file(
+            file_path=self.get_file(file_id)['result']['file_path'])
 
     def download_file(self, file_path, retry=None):
         """
         Download file by file path
+
+        Raises:
+            RuntimeError: if file can't be downloaded
+            Other: requests module exceptions
         """
         r = requests.get(f'{self.__furi}/{file_path}')
         if r.ok:
@@ -442,7 +447,7 @@ class TeBot(neotasker.BackgroundIntervalWorker):
         else:
             logger.error(f'API call failed, code: {r.status_code}')
             if retry is False or (retry is None and not self.retry_interval):
-                return None
+                raise RuntimeError('Unable to download file')
             time.sleep(self.retry_interval if self.retry_interval else retry)
             return self.call(func=func,
                              payload=payload,

@@ -53,8 +53,9 @@ def my_message(text, payload, **kwargs):
     if 'photo' in payload or 'video' in payload or 'audio' in payload:
         mybot.send('please send media as a file')
     elif 'document' in payload:
-        data = mybot.get_file_content(payload['document'].get('file_id'))
-        if data is None:
+        try:
+            data = mybot.get_file_content(payload['document'].get('file_id'))
+        except:
             mybot.send('unable to download file')
         else:
             import hashlib

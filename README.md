@@ -86,11 +86,11 @@ def start(**kwargs):
 def somehandler(**kwargs):
     payload = kwargs.get('payload')
     if 'document' in payload:
-        content = mybot.get_file_content(payload['document'].get('file_id'))
-        if content is None:
-            # unable to download file
-        else:
+        try:
+            content = mybot.get_file_content(payload['document'].get('file_id'))
             # process file content
+        except:
+            # unable to download file
 ```
 
 ### High-level API: routes
