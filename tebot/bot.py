@@ -479,6 +479,9 @@ class TeBot(neotasker.BackgroundIntervalWorker):
         super().__init__(*args, **kwargs)
 
     def process_update(self, payload):
+        """
+        Process Telegram API update object
+        """
         update_id = payload.get('update_id')
         if update_id and update_id > self._update_offset:
             self._update_offset = update_id
