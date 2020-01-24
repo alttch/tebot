@@ -291,7 +291,7 @@ class TeBot(neotasker.BackgroundIntervalWorker):
                     'chat_id': chat_id,
                     'text': text,
                     'parse_mode': mode,
-                }, **kwargs)) is not None
+                }, **kwargs))
 
     def send_photo(self,
                    media='',
