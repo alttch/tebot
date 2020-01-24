@@ -513,7 +513,7 @@ class TeBot(neotasker.BackgroundIntervalWorker):
             payload: API call payload
             files: files
             retry: False - do not retry, None - default retry, number - retry
-            interval
+                   interval
         """
         logger.debug(f'Telegram API call {func}')
         if files:
