@@ -51,9 +51,11 @@ class TeBot(neotasker.BackgroundIntervalWorker):
             if method in ('command', '*'):
                 for p in path:
                     self._command_routes[p] = fn
+                    logger.debug(f'registered command route {p} -> {fn}')
             if method in ('query', 'callback_query', '*'):
                 for p in path:
                     self._query_routes[p] = fn
+                    logger.debug(f'registered callback query route {p} -> {fn}')
 
     def handle_message(self, text, **kwargs):
         """
@@ -69,6 +71,9 @@ class TeBot(neotasker.BackgroundIntervalWorker):
 
         By default contains simple demo with a couple of cmds
         """
+        logger.debug(
+            f'handling command chat_id: {chat_id}, cmd: {cmd}, payload: {payload}'
+        )
         path = cmd.split(' ', 1)
         fn = self._command_routes.get(path[0])
         if fn is None:
@@ -93,6 +98,9 @@ class TeBot(neotasker.BackgroundIntervalWorker):
 
         By default considers all queries are commands
         """
+        logger.debug(
+            f'handling callback query chat_id: {chat_id}, query_id: {query_id},'
+            + f' data: {data}, payload: {payload}')
         path = data.split(' ', 1)
         fn = self._query_routes.get(path[0])
         if fn is None:
@@ -119,6 +127,7 @@ class TeBot(neotasker.BackgroundIntervalWorker):
         """
         Override to implement extended message handling
         """
+        logger.debug(f'handling message {msg}')
         chat = msg.get('chat')
         if not chat: return
         chat_id = chat.get('id')
@@ -136,6 +145,7 @@ class TeBot(neotasker.BackgroundIntervalWorker):
         """
         Override to implement extended query handling
         """
+        logger.debug(f'handling query {query}')
         query_id = query.get('id')
         msg = query.get('message')
         if not msg: return
@@ -491,9 +501,18 @@ class TeBot(neotasker.BackgroundIntervalWorker):
         if update_id and update_id > self._update_offset:
             self._update_offset = update_id
         if 'message' in payload:
-            self.supervisor.spawn(self.on_message, payload['message'])
+            self.supervisor.spawn(self.safe_exec, self.on_message,
+                                  payload['message'])
         elif 'callback_query' in payload:
-            self.supervisor.spawn(self.on_query, payload['callback_query'])
+            self.supervisor.spawn(self.safe_exec, self.on_query,
+                                  payload['callback_query'])
+
+    def safe_exec(self, fn, *args, **kwargs):
+        try:
+            fn(*args, **kwargs)
+        except:
+            import traceback
+            logger.debug(traceback.format_exc())
 
     def run(self, **kwargs):
         if not self.__token:
@@ -515,7 +534,7 @@ class TeBot(neotasker.BackgroundIntervalWorker):
             retry: False - do not retry, None - default retry, number - retry
                    interval
         """
-        logger.debug(f'Telegram API call {func}')
+        logger.debug(f'Telegram API call {func}: {payload}')
         if files:
             r = requests.post(f'{self.__uri}/{func}',
                               data=payload,
@@ -527,9 +546,14 @@ class TeBot(neotasker.BackgroundIntervalWorker):
                               timeout=self.timeout)
         if r.ok:
             result = r.json()
-            if result.get('ok'): return result
+            logger.debug(result)
+            if result.get('ok'):
+                return result
+            else:
+                logger.error('API call failed')
         else:
             logger.error(f'API call failed, code: {r.status_code}')
+            logger.debug(r.text)
             if retry is False or (retry is None and not self.retry_interval):
                 return None
             time.sleep(self.retry_interval if self.retry_interval else retry)
