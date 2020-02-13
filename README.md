@@ -23,8 +23,8 @@ If your project uses [neotasker](https://github.com/alttch/neotasker)
 ```python
 from tebot import TeBot
 
-# interval - polling interval, must be specified
-mybot = TeBot(interval=2)
+# delay - delay between pollings, must be specified
+mybot = TeBot(delay=2)
 # obtain token from https://telegram.me/BotFather
 mybot.set_token('botsecrettoken')
 # optionally - load previous state
@@ -43,7 +43,7 @@ from tebot import TeBot
 
 task_supervisor.create_aloop('default', default=True)
 task_supervisor.start()
-mybot = TeBot(interval=2)
+mybot = TeBot(delay=2)
 mybot.set_token('botsecrettoken')
 mybot.start()
 ```

@@ -28,7 +28,7 @@ reply_markup = {
     }]]
 }
 
-mybot = TeBot(interval=2)
+mybot = TeBot(delay=1)
 with open(mydir + '/../demo_tebot_token.dat') as fh:
     mybot.set_token(fh.read().strip())
 
