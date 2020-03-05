@@ -6,8 +6,6 @@ The goal is to to keep it simple.
 <img src="https://img.shields.io/badge/license-MIT-green.svg" />
 <img src="https://img.shields.io/badge/python-3.6%20%7C%203.7%20%7C%203.8-blue.svg" />
 
-Demo (sometimes may not work): [@demo_tebot](https://telegram.me/demo_tebot)
-
 ## How to install
 
 ```shell
